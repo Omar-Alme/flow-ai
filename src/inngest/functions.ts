@@ -1,19 +1,26 @@
+import { createAgent, openai } from '@inngest/agent-kit';
+
 import { inngest } from "./client";
 
 export const helloWorld = inngest.createFunction(
     { id: "hello-world" },
     { event: "test/hello.world" },
-    async ({ event, step }) => {
-        // imagine this is a download step
-        await step.sleep("wait-a-moment", "30s");
+    async ({ event }) => {
 
-         // imagine this is a transcript step
-        await step.sleep("wait-a-moment", "10s");
+        // Create a new agent with a system prompt (you can add optional tools, too)
+        const codeAgent = createAgent({
+            name: 'codeAgent',
+            system:
+                'You are an expert next.js developer. You write readable, maintainable code. You write simple Next.js & React snippets',
+            model: openai({ model: 'gpt-4o-mini' }),
+        });
 
-         // imagine this is a summary step
-        await step.sleep("wait-a-moment", "5s");
+        const { output } = await codeAgent.run(
+            `Write the following snippet: ${event.data.value}`,
+        );
+        console.log(output);
+        // [{ role: 'assistant', content: 'function removeUnecessaryWhitespace(...' }]
 
-
-        return { message: `Hello ${event.data.email}!` };
+        return { output };
     },
 );

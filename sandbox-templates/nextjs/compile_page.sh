@@ -2,10 +2,6 @@
 
 # This script runs during building the sandbox template
 # and makes sure the Next.js app is (1) running and (2) the `/` page is compiled
-# Ensure Next.js doesn't try to open a browser
-export BROWSER=none
-export HOSTNAME=0.0.0.0
-export PORT=3000
 
 function ping_server() {
 	counter=0

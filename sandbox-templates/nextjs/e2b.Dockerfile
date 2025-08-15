@@ -4,10 +4,6 @@ FROM node:21-slim
 # Install curl
 RUN apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Prevent Next.js from trying to open a browser in the sandbox
-ENV BROWSER=none
-ENV HOSTNAME=0.0.0.0
-ENV PORT=3000
 
 COPY compile_page.sh /compile_page.sh
 RUN chmod +x /compile_page.sh

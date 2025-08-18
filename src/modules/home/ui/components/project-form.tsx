@@ -14,6 +14,7 @@ import { ArrowUpIcon, Loader2Icon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { PROJECT_TEMPLATES } from "../../constants";
+import { useClerk } from "@clerk/nextjs";
 
 
 const formSchema = z.object({
@@ -25,6 +26,7 @@ const formSchema = z.object({
 export default function ProjectForm() {
     const router = useRouter();
     const trpc = useTRPC();
+    const clerk = useClerk();
     const queryClient = useQueryClient();
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -44,6 +46,11 @@ export default function ProjectForm() {
                 // TODO : Invalidate usage status
             },
             onError: (error) => {
+                toast.error(error.message);
+
+                if (error.data?.code === "UNAUTHORIZED") {
+                    clerk.openSignIn();
+                }
                 // TODO: redirect to pricing page
                 toast.error(error.message);
             }

@@ -4,15 +4,16 @@ import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { z } from "zod";
 import { generateSlug } from "random-word-slugs";
 import { TRPCError } from "@trpc/server";
+import { consumedCredits } from "@/lib/usage";
 
 export const projectsRouter = createTRPCRouter({
     getOne: protectedProcedure
         .input(
             z.object({
-                id: z.string().min(1, {message: "Id is required"})
+                id: z.string().min(1, { message: "Id is required" })
             })
         )
-        .query(async ({ input, ctx}) => {
+        .query(async ({ input, ctx }) => {
             const existingProject = await prisma.project.findUnique({
                 where: {
                     id: input.id,
@@ -29,7 +30,7 @@ export const projectsRouter = createTRPCRouter({
 
             return existingProject;
         }),
-    
+
     getMany: protectedProcedure
         .query(async ({ ctx }) => {
             const projects = await prisma.project.findMany({
@@ -51,11 +52,27 @@ export const projectsRouter = createTRPCRouter({
         .input(
             z.object({
                 value: z.string()
-                .min(1, {message: "Prompt is required" })
-                .max(10000, {message: "Prompt is too long"})
+                    .min(1, { message: "Prompt is required" })
+                    .max(10000, { message: "Prompt is too long" })
             })
         )
         .mutation(async ({ input, ctx }) => {
+            try {
+                await consumedCredits();
+            } catch (error) {
+                if (error instanceof Error) {
+                    throw new TRPCError({
+                        code: "BAD_REQUEST",
+                        message: "Something went wrong. Please try again."
+                    })
+                } else {
+                    throw new TRPCError({
+                        code: "TOO_MANY_REQUESTS",
+                        message: "You have reached your request limit. Please try again later."
+                    })
+                }
+            }
+            
             const createdProject = await prisma.project.create({
                 data: {
                     userId: ctx.auth.userId,

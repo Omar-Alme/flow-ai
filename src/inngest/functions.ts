@@ -6,7 +6,7 @@ import { getSandbox, lastAssistantTextMessageContent, parseAgentOutput } from '.
 import z from 'zod';
 import { PROMPT, FRAGMENT_TITLE_PROMPT, RESPONSE_PROMPT } from '@/prompt';
 import { prisma } from '@/lib/db';
-import { parse } from 'path';
+import { SANDBOX_TIMEOUT } from './types';
 
 interface AgentState {
     summary: string;
@@ -20,7 +20,7 @@ export const codeAgentFunction = inngest.createFunction(
 
         const sandboxId = await step.run("get-sandbox-id", async () => {
             const sandbox = await Sandbox.create("flow-nextjs-omar");
-            // await sandbox.setTimeout(60 * 1000);
+            await sandbox.setTimeout(SANDBOX_TIMEOUT);
             return sandbox.sandboxId;
         })
 
@@ -34,6 +34,7 @@ export const codeAgentFunction = inngest.createFunction(
                 orderBy: {
                     createdAt: "desc", //change to asc
                 },
+                take: 5,
             });
             for (const message of messages) {
                 formattedMessages.push({
@@ -42,7 +43,7 @@ export const codeAgentFunction = inngest.createFunction(
                     content: message.content
                 })
             }
-            return formattedMessages;
+            return formattedMessages.reverse();
         });
 
         const state = createState<AgentState>(

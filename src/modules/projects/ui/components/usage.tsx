@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { CrownIcon } from "lucide-react"
 import { useAuth } from "@clerk/nextjs"
+import { useMemo } from "react"
 
 interface Props {
     points: number
@@ -12,6 +13,23 @@ interface Props {
 export function Usage({ points, msBeforeNext }: Props) {
     const { has } = useAuth();
     const hasProAccess = has?.({ plan: "pro" });
+
+
+    const resetTime = useMemo(() => {
+        try {
+            return formatDuration(
+                intervalToDuration({
+                    start: new Date(),
+                    end: new Date(Date.now() + msBeforeNext)
+                }),
+                { format: ["months", "days", "hours", "minutes"] }
+            )
+        } catch (error) {
+            console.error("Error formatting duration", error);
+            return "unknown";
+        }
+    }, [msBeforeNext])
+
     return (
         <div className="rounded-t-xl bg-background border border-b-0 p-2.5">
             <div className="flex items-center gap-x-2">
@@ -20,14 +38,7 @@ export function Usage({ points, msBeforeNext }: Props) {
                         {points} {hasProAccess ? "credits" : "free credits"} remaining
                     </p>
                     <p className="text-xs text-muted-foreground">
-                        Resets in {" "}
-                        {formatDuration(
-                            intervalToDuration({
-                                start: new Date(),
-                                end: new Date(Date.now() + msBeforeNext)
-                            }),
-                            { format: ["months", "days", "hours", "minutes"] }
-                        )}
+                        Resets in {" "}{resetTime}
                     </p>
                 </div>
                 { !hasProAccess && (
